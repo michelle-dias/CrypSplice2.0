@@ -120,7 +120,7 @@ def main():
         print("Unable to install "+missing_dependency)
         exit()
 
-    # # check_directories: checking for output directories and creating/cleaning if necessary
+    # check_directories: checking for output directories and creating/cleaning if necessary
     # args.o += "/" if not args.o.endswith("/") else ""
     # if Setup.check_directories(args.o) == 1:
     #     print("Failed to find "+args.o)
@@ -158,82 +158,82 @@ def main():
         #### CrypticJunctions or CrypticLoad
         if args.command in ['CrypticJunctions', 'CrypticLoad']:
 
-            # ### ExtractJunctions [Module] : Extracting junction counts using pysam 
-            # # turning off filtering at this step for CrypticLoad Clust
-            # if args.command in ['CrypticLoad']:
-            #     junction_extraction_args = (args.o + args.prefix, args.p, controls, treated, args.s, args.gtf, 0, args.l)
-            # else:
-            #     junction_extraction_args = (args.o + args.prefix, args.p, controls, treated, args.s, args.gtf, args.j, args.l)
-            # if ExtractJunctions.get_junction_counts(*junction_extraction_args) == 1:
-            #     LogFile.log_message(logfile_path, "Completed junction extraction")
-            #     junction_counts = pd.read_csv(args.o + args.prefix + ".JunctionCounts.txt", sep="\t", dtype={"chrom": str})
-            # else:
-            #     LogFile.log_message(logfile_path, "Failed junction extraction")
-            #     LogFile.log_message(logfile_path, "Terminating...")
-            #     exit()
+            ### ExtractJunctions [Module] : Extracting junction counts using pysam 
+            # turning off filtering at this step for CrypticLoad Clust
+            if args.command in ['CrypticLoad']:
+                junction_extraction_args = (args.o + args.prefix, args.p, controls, treated, args.s, args.gtf, 0, args.l)
+            else:
+                junction_extraction_args = (args.o + args.prefix, args.p, controls, treated, args.s, args.gtf, args.j, args.l)
+            if ExtractJunctions.get_junction_counts(*junction_extraction_args) == 1:
+                LogFile.log_message(logfile_path, "Completed junction extraction")
+                junction_counts = pd.read_csv(args.o + args.prefix + ".JunctionCounts.txt", sep="\t", dtype={"chrom": str})
+            else:
+                LogFile.log_message(logfile_path, "Failed junction extraction")
+                LogFile.log_message(logfile_path, "Terminating...")
+                exit()
 
         
-            # ### AddGenes [Module] : Assign genes (ids/names) to each junction
-            # if AddGenes.add_genes(junction_counts, args.gtf, args.p, args.o+args.prefix) == 1:
-            #     LogFile.log_message(logfile_path, "Completed adding junction gene annotations : ")
-            #     junction_counts = pd.read_csv(args.o + args.prefix + ".JunctionCounts.txt", sep="\t", dtype={"chrom": str})
-            #     pass
-            # else:
-            #     LogFile.log_message(logfile_path, "Failed adding junction gene annotations : ")
-            #     LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #     exit()
+            ### AddGenes [Module] : Assign genes (ids/names) to each junction
+            if AddGenes.add_genes(junction_counts, args.gtf, args.p, args.o+args.prefix) == 1:
+                LogFile.log_message(logfile_path, "Completed adding junction gene annotations : ")
+                junction_counts = pd.read_csv(args.o + args.prefix + ".JunctionCounts.txt", sep="\t", dtype={"chrom": str})
+                pass
+            else:
+                LogFile.log_message(logfile_path, "Failed adding junction gene annotations : ")
+                LogFile.log_message(logfile_path, "Terminating ............... : ")
+                exit()
 
 
-            # ### FilterJunctions [Module] : Extra junction filter to improve capture of significant junctions 
-            # # special filtering at this step for CrypticLoad Clust
-            # if args.command in ['CrypticLoad']:
-            #     junction_counts = FilterJunctions.gene_filter(junction_counts)
-            #     if isinstance(junction_counts, pd.DataFrame):
-            #         LogFile.log_message(logfile_path, "Completed filtering junctions spanning multiple genes or not attributed to any gene: ")
-            #         pass
-            #     else:
-            #         LogFile.log_message(logfile_path, "Failed filtering junctions spanning multiple genes or not attributed to any gene: ")
-            #         LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #         exit()
-            #     junction_counts = FilterJunctions.load_quality_filter(junction_counts, args.j)
-            #     if isinstance(junction_counts, pd.DataFrame):
-            #         LogFile.log_message(logfile_path, "Completed filtering for quality junctions : ")
-            #         pass
-            #     else:
-            #         LogFile.log_message(logfile_path, "Failed filtering for quality junctions : ")
-            #         LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #         exit()
-            # else:
-            #     # PoverA filter
-            #     junction_counts = FilterJunctions.PoverA_filter(junction_counts, control_num, treated_num, args.pa_p, args.pa_a)
-            #     if isinstance(junction_counts, pd.DataFrame):
-            #         LogFile.log_message(logfile_path, "Completed PoverA filtering : ")
-            #         pass
-            #     else:
-            #         LogFile.log_message(logfile_path, "Failed PoverA filtering : ")
-            #         LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #         exit()
-            #     # gene filter (if enabled by user)
-            #     if args.g:
-            #         junction_counts = FilterJunctions.gene_filter(junction_counts)
-            #         if isinstance(junction_counts, pd.DataFrame):
-            #             LogFile.log_message(logfile_path, "Completed filtering junctions spanning multiple genes or not attributed to any gene: ")
-            #             pass
-            #         else:
-            #             LogFile.log_message(logfile_path, "Failed filtering junctions spanning multiple genes or not attributed to any gene: ")
-            #             LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #             exit()
+            ### FilterJunctions [Module] : Extra junction filter to improve capture of significant junctions 
+            # special filtering at this step for CrypticLoad Clust
+            if args.command in ['CrypticLoad']:
+                junction_counts = FilterJunctions.gene_filter(junction_counts)
+                if isinstance(junction_counts, pd.DataFrame):
+                    LogFile.log_message(logfile_path, "Completed filtering junctions spanning multiple genes or not attributed to any gene: ")
+                    pass
+                else:
+                    LogFile.log_message(logfile_path, "Failed filtering junctions spanning multiple genes or not attributed to any gene: ")
+                    LogFile.log_message(logfile_path, "Terminating ............... : ")
+                    exit()
+                junction_counts = FilterJunctions.load_quality_filter(junction_counts, args.j)
+                if isinstance(junction_counts, pd.DataFrame):
+                    LogFile.log_message(logfile_path, "Completed filtering for quality junctions : ")
+                    pass
+                else:
+                    LogFile.log_message(logfile_path, "Failed filtering for quality junctions : ")
+                    LogFile.log_message(logfile_path, "Terminating ............... : ")
+                    exit()
+            else:
+                # PoverA filter
+                junction_counts = FilterJunctions.PoverA_filter(junction_counts, control_num, treated_num, args.pa_p, args.pa_a)
+                if isinstance(junction_counts, pd.DataFrame):
+                    LogFile.log_message(logfile_path, "Completed PoverA filtering : ")
+                    pass
+                else:
+                    LogFile.log_message(logfile_path, "Failed PoverA filtering : ")
+                    LogFile.log_message(logfile_path, "Terminating ............... : ")
+                    exit()
+                # gene filter (if enabled by user)
+                if args.g:
+                    junction_counts = FilterJunctions.gene_filter(junction_counts)
+                    if isinstance(junction_counts, pd.DataFrame):
+                        LogFile.log_message(logfile_path, "Completed filtering junctions spanning multiple genes or not attributed to any gene: ")
+                        pass
+                    else:
+                        LogFile.log_message(logfile_path, "Failed filtering junctions spanning multiple genes or not attributed to any gene: ")
+                        LogFile.log_message(logfile_path, "Terminating ............... : ")
+                        exit()
 
 
-            # ### AnnotateJunctions [Module] : Assign genes (ids/names) to each junction
-            # if AnnotateJunctions.annotate_junctions(junction_counts, args.gtf, args.o+args.prefix, args.s, args.p) == 1:                
-            #     LogFile.log_message(logfile_path, "Completed annotating junctions: ")
-            #     junction_counts = pd.read_csv(args.o+args.prefix+".Annotated_JunctionCounts.txt", sep="\t", dtype={"chrom": str})
-            #     pass
-            # else:
-            #     LogFile.log_message(logfile_path, "Failed to annotate junctions: ")
-            #     LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #     exit()
+            ### AnnotateJunctions [Module] : Assign genes (ids/names) to each junction
+            if AnnotateJunctions.annotate_junctions(junction_counts, args.gtf, args.o+args.prefix, args.s, args.p) == 1:                
+                LogFile.log_message(logfile_path, "Completed annotating junctions: ")
+                junction_counts = pd.read_csv(args.o+args.prefix+".Annotated_JunctionCounts.txt", sep="\t", dtype={"chrom": str})
+                pass
+            else:
+                LogFile.log_message(logfile_path, "Failed to annotate junctions: ")
+                LogFile.log_message(logfile_path, "Terminating ............... : ")
+                exit()
 
             
 
@@ -283,18 +283,8 @@ def main():
             #### CrypticLoad 
             if args.command in ['CrypticLoad']:
                 ### CrypticLoad [Module] : Calculate gene and sample-level load (equivalent of PSI)
-                # get gene counts for load calculation
-                n_crypticJunctions = CrypticLoad.extract_gene_counts(args.o+args.prefix+".Annotated_JunctionCounts.txt", args.o+args.prefix+".", controls+treated, args.s, args.p, args.gtf)
-                if n_crypticJunctions != 0:
-                    LogFile.log_message(logfile_path, "Completed extracting gene counts : ")
-                    pass
-                else:
-                    LogFile.log_message(logfile_path, "Failed extracting gene counts : ")
-                    LogFile.log_message(logfile_path, "Terminating ............... : ")
-                    exit()
-
                 # gene-level
-                if CrypticLoad.calculate_geneLoad(args.o+args.prefix+".GeneCounts.txt", args.o+args.prefix+".") == 1:
+                if CrypticLoad.get_geneLoad(args.o+args.prefix+".Annotated_JunctionCounts.txt", control_num, treated_num, args.o+args.prefix+".") == 1:
                     LogFile.log_message(logfile_path, "Completed calculating gene-level cryptic load : ")
                     pass
                 else:
@@ -302,7 +292,7 @@ def main():
                     LogFile.log_message(logfile_path, "Terminating ............... : ")
                     exit()
                 # sample-level
-                if CrypticLoad.calculate_sampleLoad(args.o+args.prefix+".GeneCounts.txt", args.o+args.prefix+".", n_crypticJunctions) == 1:
+                if CrypticLoad.get_sampleLoad(args.o+args.prefix+".Annotated_JunctionCounts.txt", control_num, treated_num, args.o+args.prefix+".") == 1:
                     LogFile.log_message(logfile_path, "Completed calculating sample-level cryptic load : ")
                     pass
                 else:

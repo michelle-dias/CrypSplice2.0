@@ -7,77 +7,42 @@ from sklearn.decomposition import NMF
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 import numpy as np 
 import matplotlib.pyplot as plt
-import os, sys
-sys.path.append("/".join(os.path.abspath(sys.argv[0]).split("/")[0:-1])+"/lib")
-import Utilities
+
 
 
 # Calculating gene and sample level cryptic load #
 
 
-# Extract Gene Counts
-## extracting counts for the genes which junctions fall into for load calculation 
-def extract_gene_counts(junction_counts_path, outDir, sample_paths, strand, processors, gtf_path):    
-    junction_counts = pd.read_csv(junction_counts_path, sep="\t",dtype={"chrom": str})
-    junction_counts, no_crypJunc = get_gene_sums(junction_counts)
-    unique_genes=set(junction_counts["gene"])
-    gtf_data=Utilities.read_gtf_file(gtf_path)
-    gene_gtf = gtf_data[gtf_data["feature"]=="gene"]
-    gene_gtf = gene_gtf.assign(gene_id=gene_gtf['attribute'].str.extract(r'gene_id "(.*?)"'))
-    unique_gene_gtf = gene_gtf[gene_gtf["gene_id"].isin(unique_genes)]
-    # subsetting gtf for junction genes
-    # creating saf file
-    saf_file = unique_gene_gtf[["gene_id","chrom","start","end","strand"]]
-    saf_file.columns = ['GeneID', 'Chr', 'Start', 'End', 'Strand']
-    saf_file_path = outDir+"saf_tmp.txt"
-    saf_file.to_csv(saf_file_path, sep="\t", index=None)
-    bam_paths=" ".join(sample_paths)
-    output_file=outDir+"geneCounts.txt"
-    featureCounts_cmd = "featureCounts -p -F 'SAF' -s "+str(strand)+" -T "+str(processors)+" -a "+saf_file_path+" -o "+output_file+" "+bam_paths
-    exit_code = os.system(featureCounts_cmd)
-    if exit_code==0:
-        gene_counts = pd.read_csv(output_file, sep="\t", header=1)
-        new_columns = [col.split('/')[-1].replace('.bam', '_geneCounts') for col in gene_counts.columns[6:]]
-        gene_counts.columns = list(gene_counts.columns[:6]) + new_columns
-        gene_counts.rename(columns={'Geneid': 'gene'}, inplace=True)
-        gene_counts = gene_counts[['gene'] + list(gene_counts.columns[gene_counts.columns.get_loc('Length')+1:])]
-        merged_df = pd.merge(junction_counts, gene_counts, on='gene', how='left', suffixes=('_junction', '_gene'))
-        merged_df.to_csv(outDir+"GeneCounts.txt", sep="\t", index=None)
-        os.system("rm "+output_file+" "+output_file+".summary "+saf_file_path)
-        return(no_crypJunc)
-    else:
-        return(0)
-
 # Get Gene-Load
-## getting gene-level sums of cryptic junctions - nested in above function
-def get_gene_sums(junction_counts):
-    # filtering for cryptic counts 
-    junction_counts = junction_counts[junction_counts["annotation"]!="DA"]
-    no_crypJunc = len(junction_counts)
-    cols_juncCounts = [col for col in junction_counts.columns if col.endswith('juncCounts')]
-    cryptic_junctions = junction_counts[cols_juncCounts + ['gene']]
-    crypJunc_sums = cryptic_junctions.groupby('gene').sum()
-    crypJunc_sums["gene"] = crypJunc_sums.index
-    crypJunc_sums.reset_index(drop=True, inplace=True)
-    crypJunc_sums = crypJunc_sums[['gene'] + cols_juncCounts]
-    return(crypJunc_sums, no_crypJunc)
-
-
-
-# Calculate Gene-Load
 ## finding the gene-level cryptic load [100*(total cryptic junctions in gene / total junctions in gene)]
-def calculate_geneLoad(gene_sums_path, outDir):
-    geneLoad_df = pd.read_csv(gene_sums_path, sep="\t", dtype={"chrom": str})
-    junc_columns = [col for col in geneLoad_df.columns if col.endswith('juncCounts')]
-    gene_columns = [col for col in geneLoad_df.columns if col.endswith('geneCounts')]
-    sample_prefixes = [col.replace('_juncCounts', '') for col in junc_columns]
-    for prefix in sample_prefixes:
-        geneLoad_df[prefix+"_crypticLoad"]=geneLoad_df[prefix+"_juncCounts"]/geneLoad_df[prefix+"_geneCounts"]
-    load_columns = [col for col in geneLoad_df.columns if col.endswith('crypticLoad')]
-    # replace all inf with 0 - gene counts were 0 -> 1/0=inf
-    # replace all blanks with 0
-    geneLoad_df.replace([np.inf, -np.inf, '', 'NaN'], 0, inplace=True)
-    geneLoad_df.fillna(0, inplace=True)
+def get_geneLoad(junction_counts_path, nc, nt, outDir):
+    junction_counts = pd.read_csv(junction_counts_path, sep="\t")
+    sample_names = junction_counts.columns[4:4+nc+nt]
+    # only retaining junctions attributed to a single gene and not NA
+    junction_counts = junction_counts.dropna(subset=['gene'])
+    junction_counts = junction_counts[~junction_counts['gene'].str.contains(',')]
+    # creating gene-load dataframe
+    crypCount_cols = [sample + "_cryptic_juncCounts" for sample in sample_names]
+    juncCount_cols = [sample + "_total_juncCounts" for sample in sample_names]
+    crypLoad_cols = [sample + "_crypticLoad" for sample in sample_names]
+    colNames = crypCount_cols + juncCount_cols + crypLoad_cols
+    colNames.insert(0, 'gene')
+    geneLoad_df = pd.DataFrame(columns = colNames)
+    # iterating through each gene in the full junctions df
+    grouped = junction_counts.groupby('gene')
+    for gene, group in grouped:
+        cryptic_counts = group[group["annotation"]!="DA"].iloc[:, 4:(4+nc+nt)]
+        junction_counts = group.iloc[:, 4:(4+nc+nt)]
+        cryptic_sums = cryptic_counts.sum().values
+        junction_sums = junction_counts.sum().values
+        # calc gene load and avoid error when dividing Na in np array 
+        valid_division = (junction_sums != 0) & ~np.isnan(junction_sums)
+        gene_load = np.zeros(nc + nt)
+        gene_load[valid_division] = cryptic_sums[valid_division] / junction_sums[valid_division]
+        new_row = np.concatenate((cryptic_sums, junction_sums, gene_load)).tolist()
+        new_row.insert(0, gene)
+        geneLoad_df.loc[len(geneLoad_df)] = new_row
+    # saving the dataframe
     if not geneLoad_df.empty:
         geneLoad_df.to_csv(outDir+"GeneLoad.txt", sep="\t", index=None)
         return(1)
@@ -86,35 +51,39 @@ def calculate_geneLoad(gene_sums_path, outDir):
 
 
 
-
-# Calculate Sample-Load
+# Get Sample-Load
 ## finding the sample-level cryptic load [100*(total cryptic junctions in sample / total junctions in sample)]
-def calculate_sampleLoad(gene_sums_path,outDir,n_crypticJunctions):
-    junction_counts = pd.read_csv(gene_sums_path, sep="\t")
-    # sample_names = junction_counts.columns[4:4+nc+nt]
-    # # creating gene-load dataframe
-    junc_columns = [col for col in junction_counts.columns if col.endswith('juncCounts')]
-    gene_columns = [col for col in junction_counts.columns if col.endswith('geneCounts')]
-    load_columns = [col.replace('_juncCounts', '_crypticLoad') for col in junc_columns]
-    sample_prefixes = [col.replace('_juncCounts', '') for col in junc_columns]
-    colNames = junc_columns + gene_columns + load_columns
+def get_sampleLoad(junction_counts_path, nc, nt, outDir):
+    junction_counts = pd.read_csv(junction_counts_path, sep="\t")
+    sample_names = junction_counts.columns[4:4+nc+nt]
+    # creating gene-load dataframe
+    crypCount_cols = [sample + "_cryptic_juncCounts" for sample in sample_names]
+    juncCount_cols = [sample + "_total_juncCounts" for sample in sample_names]
+    crypLoad_cols = [sample + "_crypticLoad" for sample in sample_names]
+    colNames = crypCount_cols + juncCount_cols + crypLoad_cols
     colNames.insert(0, 'total_junctions')
     sampleLoad_df = pd.DataFrame(columns = colNames)
     # getting totals for all retained junctions
-    junc_sums = junction_counts[junc_columns].sum().values
-    gene_sums = junction_counts[gene_columns].sum().values
-    sample_loads = [0] * len(junc_columns)
-    data = [[0] + junc_sums.tolist() + gene_sums.tolist() + sample_loads]
-    sampleLoad_df = pd.DataFrame(data, columns=colNames)
-    for prefix in sample_prefixes:
-        sampleLoad_df[prefix+"_crypticLoad"] = sampleLoad_df[prefix+"_juncCounts"]/sampleLoad_df[prefix+"_geneCounts"]
+    cryptic_counts = junction_counts[junction_counts["annotation"]!="DA"].iloc[:, 4:(4+nc+nt)]
+    junction_counts = junction_counts.iloc[:, 4:(4+nc+nt)]
+    cryptic_sums = cryptic_counts.sum().values
+    junction_sums = junction_counts.sum().values
+    # calc sample load and avoid error when dividing Na in np array 
+    valid_division = (junction_sums != 0) & ~np.isnan(junction_sums)
+    sample_load = np.zeros(nc + nt)
+    sample_load[valid_division] = cryptic_sums[valid_division] / junction_sums[valid_division]
+    new_row = np.concatenate((cryptic_sums, junction_sums, sample_load)).tolist()
     # finding total number of junctions in calculations
-    sampleLoad_df["total_junctions"]=n_crypticJunctions
+    new_row.insert(0, len(junction_counts))
+    sampleLoad_df.loc[int(len(sampleLoad_df))] = new_row
+    # saving the dataframe
     if not sampleLoad_df.empty:
         sampleLoad_df.to_csv(outDir+"SampleLoad.txt", sep="\t", index=None)
         return(1)
     else:
         return(0)
+
+
 	
 
 
