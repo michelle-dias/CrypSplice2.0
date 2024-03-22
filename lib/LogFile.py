@@ -9,7 +9,7 @@ import time
 # Write Arguments 
 ## creating log file for logged messages
 def write_arguments(outDir, args):
-	logfile = open(outDir+'.CrypSplice.log.txt','w')
+	logfile = open(outDir+'log.txt','w')
 	logfile.write('# *********** Arguments *********** \n')
 	args_dict = vars(args)
 	for k in args_dict.keys():

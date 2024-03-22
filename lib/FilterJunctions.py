@@ -17,14 +17,14 @@ def load_quality_filter(junction_counts, read_cutoff):
 
 
 # PoverA Filter
+## retaining rows with greater than 'M' reads in all condition specific samples 
 ## retaining rows with greater than 'A' reads in 'P' proportion of samples 
-## 'M' part of filter is unnecessary due to filtering in ExtractJunctions module
-def PoverA_filter(sjdf, nc, nt, P, A):
+def PoverAM_filter(sjdf, nc, nt, P, A, M):
     control_df = sjdf.iloc[:, 4:4+nc]
     treated_df = sjdf.iloc[:, 4+nc:4+nc+nt]
-    # ## retaining rows with at least 'M' reads in all rows within controls and treated ##
-    # control_df=control_df[((control_df.iloc[:,1:1+nc] >= M).sum(axis=1) >= nc)]
-    # treated_df=treated_df[((treated_df.iloc[:,1:1+nt] >= M).sum(axis=1) >= nt)]
+    ## retaining rows with at least 'M' reads in all rows within controls and treated ##
+    control_df = control_df[(control_df>= M).sum(axis=1) == nc]
+    treated_df = treated_df[(treated_df>= M).sum(axis=1) == nt]
     ## retaining rows with greater than 'A' reads in 'P' proportion of samples greater than ##
     ## decimal P (1.5) rounded up automatically -> P=0.5 and there are 3 samples, 2 will have to be above cutoff
     control_df=control_df[((control_df >= A).sum(axis=1) >= nc*P)]
@@ -33,8 +33,8 @@ def PoverA_filter(sjdf, nc, nt, P, A):
     treated_indices = treated_df.index.tolist()
     superset_indices = set(control_indices) | set(treated_indices)
     sjdf_filtered = sjdf.loc[list(superset_indices)]
+    sjdf_filtered=sjdf_filtered.reset_index(drop=True)
     return(sjdf_filtered)
-
 
 
 # Gene Filter

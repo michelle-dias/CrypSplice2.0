@@ -4,7 +4,7 @@ import sys, os
 import pandas as pd
 from collections import defaultdict
 import concurrent.futures as cf
-import pysam
+import subprocess
 
 sys.path.append("/".join(os.path.abspath(sys.argv[0]).split("/")[0:-1])+"/lib")
 import Utilities
@@ -14,117 +14,70 @@ import Utilities
 
 # Get Junction Counts
 ## master function for obtaining junctions using pysam
-def get_junction_counts(outDir, processors, control, treated, strand, gtf_path, read_cutoff, length_cutoff):
-    ## reading in gtf data and getting list of uniue chromosomes
-    gtf_data = Utilities.read_gtf_file(gtf_path)
-    chromosomes = gtf_data["chrom"].unique()
-    #all_junctions, all_exons = parallelize_extract_counts(control+treated, strand, chromosomes, processors)
-    #all_junctions = parallelize_extract_counts(control+treated, strand, chromosomes, processors)
-    all_junctions = parallelize_extract_counts(control+treated, strand, chromosomes, processors)
-    junctions = parallelize_merge_filter_counts(all_junctions, control, treated, chromosomes, read_cutoff, processors)
-    # drop junctions that are on both strands (technical mapping issues)
-    junctions = junctions[~junctions.duplicated(subset=["chrom","start","end"], keep=False)]
-    # retain junctions with length at least 25 bp 
-    junctions = junctions[junctions["end"]-junctions["start"]>=length_cutoff]
-    junctions = get_junction_origin_counts(junctions, control+treated, all_junctions)
-    junctions['juncID'] = junctions.apply(lambda row: ':'.join([str(row['chrom']), str(row['start'])]) + '-' + str(row['end']), axis=1)
-    junctions.to_csv(outDir+".JunctionCounts.txt", sep="\t", index=None)
-    return 0 if junctions.empty else 1
+def get_junction_counts(outdir, processors, control, treated, strand, gtf_path, length_cutoff):
+    # adjust strand for regtools #
+    if strand == 1:
+        regtools_strand = 2
+    elif strand == 2:
+        regtools_strand = 1
+    else:
+        regtools_strand = 0
+    samples=control+treated
+    pl=[]
+    for sample in samples:
+        pl.append([sample,outdir,regtools_strand, length_cutoff])
+    with cf.ProcessPoolExecutor(max_workers=int(processors)) as (executor):
+        result = list(executor.map(run_regtools, pl))
+    if 0 in result:
+        return(0)
+    else:
+        count_list = []
+        for sample in samples:
+            sample_name=sample.split("/")[-1].replace(".bam","")
+            junction_bed=outdir+sample_name+".regtools.juncExtract.bed"
+            junction_counts = pd.read_csv(junction_bed, sep="\t", header=None)
+            junction_counts = junction_counts.copy()
+            junction_counts[[12, 13]] = junction_counts[10].str.split(pat=',', n=1, expand=True)
+            # adding/subtracting block sizes due to regtools formatting - check regtools docs for explanation
+            junction_counts[1]=junction_counts[1].astype(int)+junction_counts[12].astype(int)
+            junction_counts[2]=junction_counts[2].astype(int)+junction_counts[13].astype(int)
+            junction_counts = junction_counts[[0,1,2,5,4]]
+            junction_counts.columns = ["chrom", "start", "end", "strand", sample_name]
+            count_list.append(junction_counts)
+            #os.system("rm "+junction_bed)
+        merged_juncCounts = pd.concat(count_list).groupby(["chrom", "start", "end", "strand"]).sum().reset_index()
+        merged_juncCounts = merged_juncCounts.fillna(0)
+        junc_dict = create_dictionary(merged_juncCounts)
+        junction_counts = get_junction_origin_counts(merged_juncCounts, control+treated, junc_dict)
+        junction_counts['juncID'] = junction_counts.apply(lambda row: ':'.join([str(row['chrom']), str(row['start'])]) + '-' + str(row['end']), axis=1)
+        if junction_counts.empty:
+            return(0)
+        else:
+            junction_counts.to_csv(outdir+"JunctionCounts.txt", sep="\t", index=None)
+            return(1)
 
 
-# Parallelize Extract Counts
-## parallelization of extract_counts for increased efficiency - split by chromosome
-def parallelize_extract_counts(samples, strand, chromosomes, processors):
-    all_junctions = defaultdict(int)
-    #all_exons = defaultdict(int)
-    parameter_list=[]
-    for sample_path in samples:    
-        sampleID = sample_path.split("/")[-1].replace(".bam","")
-        all_junctions[sampleID] = defaultdict(int)
-        #all_exons[sampleID] = defaultdict(int)
-        for chromosome in chromosomes:
-            parameter_list.append([sample_path, sampleID, strand, chromosome])
-    with cf.ProcessPoolExecutor(max_workers=int(processors)) as executor:
-        #for sampleID, junctions, exons in executor.map(extract_counts, parameter_list):
-        for sampleID, junctions in executor.map(extract_counts, parameter_list):
-            all_junctions[sampleID].update(junctions)
-            #all_exons[sampleID].update(exons)
-    return all_junctions#, all_exons
 
 
-# Extract Counts
-## extracting counts for each junction using pysam - also defining strand information 
-def extract_counts(parameter_list):
-    bam_file_path = parameter_list[0]
-    sampleID = parameter_list[1]
-    strand = parameter_list[2]
-    chromosome = parameter_list[3]
-    junctions = defaultdict(int)
-    #exons = defaultdict(int)
-    with pysam.AlignmentFile(bam_file_path, "rb") as bam_file:
-        for read in bam_file.fetch(chromosome):
-            if read.is_unmapped or read.is_supplementary or read.is_secondary:
-            #if read.is_unmapped:
-                continue
-            #chrom = bam_file.get_reference_name(read.reference_id)
-            blocks = read.get_blocks()
-            if strand == 0:
-                read_strand = 0
-            if strand == 2:
-                if read.is_read1 and read.is_reverse:
-                    read_strand = "+"
-                elif read.is_read1:
-                    read_strand = "-"
-                elif read.is_read2 and read.is_reverse:
-                    read_strand = "-"
-                elif read.is_read2:
-                    read_strand = "+"
-            #for block in blocks:
-            #    exons[(chrom, block[0], block[1], read_strand)] += 1
-            if "N" in read.cigarstring:
-                for i in range(1, len(blocks)):
-                    junction_start = blocks[i - 1][1]
-                    junction_end = blocks[i][0]
-                    junctions[(chromosome, junction_start, junction_end, read_strand)] += 1
-    return sampleID, junctions#, exons
+
+# Run Regtools
+## using regtools to extract junctions from each bam file 
+def run_regtools(file):
+    input_bam=file[0]; output_bed=file[1]+file[0].split("/")[-1].replace(".bam",".regtools.juncExtract.bed")
+    strand=str(file[2])
+    length_cutoff=str(file[3])
+    log = subprocess.run(['regtools','junctions','extract','-s',strand,'-m',length_cutoff,'-o',output_bed,input_bam],stderr=subprocess.DEVNULL,shell=False)
+    return(1)
 
 
-# Parallelize Merge and Filter Counts 
-## parallelizing filtering and merging of junctions counts extracted from each chromosome
-def parallelize_merge_filter_counts(all_counts, control, treated, chromosomes, read_cutoff, processors):
-    merged_filtered_counts = defaultdict(int)
-    parameter_list = []
-    for chromosome in chromosomes:
-        all_counts_perChrom = {key: {sub_key: sub_value for sub_key, sub_value in value.items() if sub_key[0] == chromosome} for key, value in all_counts.items()}
-        parameter_list.append([all_counts_perChrom, control, treated, chromosome, read_cutoff])
-    with cf.ProcessPoolExecutor(max_workers=int(processors)) as executor:
-        for filtered_counts_perChrom in executor.map(merge_filter_counts, parameter_list):
-            merged_filtered_counts.update(filtered_counts_perChrom)
-    sampleIDs = [sample.split("/")[-1].replace(".bam","") for sample in control+treated]
-    merged_filtered_counts = pd.DataFrame(merged_filtered_counts).T.reset_index()
-    #merged_filtered_counts.columns = ["chrom", "start", "end", "strand"] + sampleIDs
-    merged_filtered_counts.columns = ["chrom", "start", "end", "strand"] + [sampleID + "_juncCounts" for sampleID in sampleIDs]
-
-    return merged_filtered_counts
-
-
-# Merge and Filter Counts 
-## merging and filtering the junction counts extracted for each chromosome and sample
-def merge_filter_counts(parameter_list):
-    all_counts_perChrom = parameter_list[0]
-    control = parameter_list[1]
-    treated = parameter_list[2]
-    chromosome = parameter_list[3]
-    read_cutoff = parameter_list[4]
-    merged_counts_perChrom = defaultdict(list)
-    keys = set().union(*all_counts_perChrom.values())
-    sampleIDs = [sample.split("/")[-1].replace(".bam","") for sample in control+treated]
-    for sampleID in sampleIDs:
-        for key in keys:
-            value = all_counts_perChrom[sampleID].get(key, 0)
-            merged_counts_perChrom[key].append(value)
-    filtered_counts_perChrom = {key: value for key, value in merged_counts_perChrom.items() if all(x > read_cutoff for x in value[len(control):]) or all(x > read_cutoff for x in value[:len(control)])}
-    return filtered_counts_perChrom
+# Create Dictionary 
+## create junction counts dictionary from junction counts dataframe to find origin sums
+def create_dictionary(juncCount_data):
+    junction_dict = {}
+    sample_cols = [col for col in juncCount_data.columns if col not in ['chrom', 'start', 'end', 'strand']]
+    for column in sample_cols:
+        junction_dict[column] = juncCount_data.set_index(['chrom', 'start', 'end', 'strand'])[column].to_dict()
+    return(junction_dict)
 
 
 # Sum Origin Counts
@@ -172,3 +125,4 @@ def get_junction_origin_counts(junctions, sample_paths, all_junctions):
     for sample in samples:
         junctions[sample+"_originCounts"] = junctions.apply(get_junction_origin_counts_perRow, args=(sample, all_junctions_origin_sums,), axis=1)
     return junctions
+

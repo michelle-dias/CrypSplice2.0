@@ -19,17 +19,17 @@ def get_geneLoad(junction_counts_path, nc, nt, outDir):
     junction_counts = pd.read_csv(junction_counts_path, sep="\t")
     sample_names = junction_counts.columns[4:4+nc+nt]
     # only retaining junctions attributed to a single gene and not NA
-    junction_counts = junction_counts.dropna(subset=['gene'])
-    junction_counts = junction_counts[~junction_counts['gene'].str.contains(',')]
+    junction_counts = junction_counts.dropna(subset=['gene_ids'])
+    junction_counts = junction_counts[~junction_counts['gene_ids'].str.contains(',')]
     # creating gene-load dataframe
     crypCount_cols = [sample + "_cryptic_juncCounts" for sample in sample_names]
     juncCount_cols = [sample + "_total_juncCounts" for sample in sample_names]
     crypLoad_cols = [sample + "_crypticLoad" for sample in sample_names]
     colNames = crypCount_cols + juncCount_cols + crypLoad_cols
-    colNames.insert(0, 'gene')
+    colNames.insert(0, 'gene_ids')
     geneLoad_df = pd.DataFrame(columns = colNames)
     # iterating through each gene in the full junctions df
-    grouped = junction_counts.groupby('gene')
+    grouped = junction_counts.groupby('gene_ids')
     for gene, group in grouped:
         cryptic_counts = group[group["annotation"]!="DA"].iloc[:, 4:(4+nc+nt)]
         junction_counts = group.iloc[:, 4:(4+nc+nt)]
@@ -160,7 +160,7 @@ def find_cluster_membership(rank, nmf_df, outDir, geneLoad_df):
     })
     sample_membership = sample_membership.reset_index(drop=True)
     # Creating Gene Membership DataFrame
-    gene_names = geneLoad_df["gene"]
+    gene_names = geneLoad_df["gene_ids"]
     W_mat = pd.DataFrame(W, index=gene_names)
     # creating a new cluster for rows with all 0 -> could not be properly assigned to a cluster
     W_mat[rank] = (W_mat == 0).all(axis=1).astype(int)

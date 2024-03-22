@@ -32,7 +32,7 @@ def add_genes(annotated_junction_counts, gtf_path, processors, outDir):
 	junctions_withGenes = pd.DataFrame(results, columns=column_names)
 	# dropping junctions with ends in two genes where the intron length is greater than 2500
 	junctions_withGenes = junctions_withGenes[~(junctions_withGenes['gene'].str.contains(',', na=False) & (junctions_withGenes['end'] - junctions_withGenes['start'] > 2500))]
-	junctions_withGenes.to_csv(outDir+".JunctionCounts.txt", sep="\t", index=None)
+	junctions_withGenes.to_csv(outDir+"JunctionCounts.txt", sep="\t", index=None)
 	return 0 if junctions_withGenes['gene'].isna().all() else 1
 
 
