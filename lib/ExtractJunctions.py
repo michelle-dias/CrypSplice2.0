@@ -49,7 +49,7 @@ def get_junction_counts(outdir, processors, control, treated, strand, gtf_path, 
         merged_juncCounts = merged_juncCounts.fillna(0)
         junc_dict = create_dictionary(merged_juncCounts)
         junction_counts = get_junction_origin_counts(merged_juncCounts, control+treated, junc_dict)
-        junction_counts['juncID'] = junction_counts.apply(lambda row: ':'.join([str(row['chrom']), str(row['start'])]) + '-' + str(row['end']), axis=1)
+        junction_counts['juncID'] = junction_counts.apply(lambda row: ':'.join([str(row['chrom']), str(row['start'])])+'-'+ str(row['end'])+"("+str(row['strand'])+")", axis=1)
         if junction_counts.empty:
             return(0)
         else:

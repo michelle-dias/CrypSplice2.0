@@ -19,17 +19,17 @@ def get_geneLoad(junction_counts_path, nc, nt, outDir):
     junction_counts = pd.read_csv(junction_counts_path, sep="\t")
     sample_names = junction_counts.columns[4:4+nc+nt]
     # only retaining junctions attributed to a single gene and not NA
-    junction_counts = junction_counts.dropna(subset=['gene_ids'])
-    junction_counts = junction_counts[~junction_counts['gene_ids'].str.contains(',')]
+    junction_counts = junction_counts.dropna(subset=['gene_id'])
+    junction_counts = junction_counts[~junction_counts['gene_id'].str.contains(',')]
     # creating gene-load dataframe
     crypCount_cols = [sample + "_cryptic_juncCounts" for sample in sample_names]
     juncCount_cols = [sample + "_total_juncCounts" for sample in sample_names]
     crypLoad_cols = [sample + "_crypticLoad" for sample in sample_names]
     colNames = crypCount_cols + juncCount_cols + crypLoad_cols
-    colNames.insert(0, 'gene_ids')
+    colNames.insert(0, 'gene_id')
     geneLoad_df = pd.DataFrame(columns = colNames)
     # iterating through each gene in the full junctions df
-    grouped = junction_counts.groupby('gene_ids')
+    grouped = junction_counts.groupby('gene_id')
     for gene, group in grouped:
         cryptic_counts = group[group["annotation"]!="DA"].iloc[:, 4:(4+nc+nt)]
         junction_counts = group.iloc[:, 4:(4+nc+nt)]

@@ -160,7 +160,6 @@ def main():
         if args.command in ['CrypticJunctions', 'CrypticLoad']:
 
             ### ExtractJunctions [Module] : Extracting junction counts using pysam 
-            # turning off filtering at this step for CrypticLoad Clust
             if ExtractJunctions.get_junction_counts(args.o + args.prefix, args.p, controls, treated, args.s, args.gtf, args.l) == 1:
                 LogFile.log_message(logfile_path, "Completed junction extraction")
                 junction_counts = pd.read_csv(args.o + args.prefix + "JunctionCounts.txt", sep="\t", dtype={"chrom": str})
@@ -168,17 +167,7 @@ def main():
                 LogFile.log_message(logfile_path, "Failed junction extraction")
                 LogFile.log_message(logfile_path, "Terminating...")
                 exit()
-
-
-            ### AddGenes [Module] : Assign genes (ids/names) to each junction
-            if AddGenes.add_genes(junction_counts, args.gtf, args.p, args.o+args.prefix) == 1:
-                LogFile.log_message(logfile_path, "Completed adding junction gene ids : ")
-                junction_counts = pd.read_csv(args.o + args.prefix + "JunctionCounts.txt", sep="\t", dtype={"chrom": str})
-                pass
-            else:
-                LogFile.log_message(logfile_path, "Failed adding junction gene annotations : ")
-                LogFile.log_message(logfile_path, "Terminating ............... : ")
-                exit()
+            
 
 
             ### FilterJunctions [Module] : Extra junction filter to improve capture of significant junctions 
@@ -202,18 +191,31 @@ def main():
                     LogFile.log_message(logfile_path, "Failed PoverA filtering : ")
                     LogFile.log_message(logfile_path, "Terminating ............... : ")
                     exit()
+
+
+            ### AddGenes [Module] : Assign genes (ids/names) to each junction
+            if AddGenes.add_genes(junction_counts, args.gtf, args.p, args.o+args.prefix) == 1:
+                LogFile.log_message(logfile_path, "Completed adding junction gene ids : ")
+                junction_counts = pd.read_csv(args.o + args.prefix + "JunctionCounts.txt", sep="\t", dtype={"chrom": str})
+                pass
+            else:
+                LogFile.log_message(logfile_path, "Failed adding junction gene annotations : ")
+                LogFile.log_message(logfile_path, "Terminating ............... : ")
+                exit()
+
+            ### FilterJunctions [Module] : Extra junction filter to improve capture of significant junctions 
             # gene filter (if enabled by user) or Cryptic Load
             if (args.command in ['CrypticLoad'] or args.g):
                 junction_counts = FilterJunctions.gene_filter(junction_counts)
                 if isinstance(junction_counts, pd.DataFrame):
                     LogFile.log_message(logfile_path, "Completed filtering junctions spanning multiple genes or not attributed to any gene: ")
+                    junction_counts.to_csv(args.o + args.prefix + "JunctionCounts.txt", sep="\t", index=None)
+
                     pass
                 else:
                     LogFile.log_message(logfile_path, "Failed filtering junctions spanning multiple genes or not attributed to any gene: ")
                     LogFile.log_message(logfile_path, "Terminating ............... : ")
                     exit()
-            junction_counts.to_csv(args.o + args.prefix + "JunctionCounts.txt", sep="\t", index=None)
-
 
 
             ### AnnotateJunctions [Module] : Assign genes (ids/names) to each junction
@@ -225,52 +227,49 @@ def main():
                 LogFile.log_message(logfile_path, "Failed to annotate junctions: ")
                 LogFile.log_message(logfile_path, "Terminating ............... : ")
                 exit()
-            
-            
-            
-            
 
-            # #### CrypticJunctions 
-            # if args.command in ['CrypticJunctions']:
+        
+            #### CrypticJunctions 
+            if args.command in ['CrypticJunctions']:
 
-            #     ### DifferentialUsage [Module] : Run beta-binomial test (R countdata) to identify differentially used junctions
-            #     ### DifferentialUsage [Module] : Calculate junction strength (PSI) (junction counts)/(total counts originating from junction origin)
-            #     # novel junctions
-            #     novel_junctions = junction_counts[junction_counts['annotation']!="DA"]
-            #     novel_junctions.to_csv(args.o+args.prefix+".Novel_Junctions.txt", sep="\t", index=None)
-            #     if DifferentialUsage.run_bbTest(args.o+args.prefix+".Novel_Junctions.txt", control_num, treated_num, args.p, "CrypticJunctions") == 1:
-            #         LogFile.log_message(logfile_path, "Completed BB test on novel junctions : ")
-            #         if DifferentialUsage.calc_junction_strength(args.o+args.prefix+".Novel_Junctions.txt", control_num, treated_num) == 1:
-            #             LogFile.log_message(logfile_path, "Completed computing junction strength on novel junctions : ")
-            #             novel_junctions = pd.read_csv(args.o+args.prefix+".Novel_Junctions.txt", sep="\t")
-            #             pass
-            #         else:
-            #             LogFile.log_message(logfile_path, "Failed computing junction strength on novel junctions : ")
-            #             LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #             exit()
-            #     else:
-            #         LogFile.log_message(logfile_path, "Failed BB test on novel junctions : ")
-            #         LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #         exit()
+                ### DifferentialUsage [Module] : Run beta-binomial test (R countdata) to identify differentially used junctions
+                ### DifferentialUsage [Module] : Calculate junction strength (PSI) (junction counts)/(total counts originating from junction origin)
+                # novel junctions
+                novel_junctions = junction_counts[junction_counts['annotation']!="DA"]
+                novel_junctions.to_csv(args.o+args.prefix+".Novel_Junctions.txt", sep="\t", index=None)
+                if DifferentialUsage.run_bbTest(args.o+args.prefix+".Novel_Junctions.txt", control_num, treated_num, args.p, "CrypticJunctions") == 1:
+                    LogFile.log_message(logfile_path, "Completed BB test on novel junctions : ")
+                    if DifferentialUsage.calc_junction_strength(args.o+args.prefix+".Novel_Junctions.txt", control_num, treated_num) == 1:
+                        LogFile.log_message(logfile_path, "Completed computing junction strength on novel junctions : ")
+                        novel_junctions = pd.read_csv(args.o+args.prefix+".Novel_Junctions.txt", sep="\t")
+                        pass
+                    else:
+                        LogFile.log_message(logfile_path, "Failed computing junction strength on novel junctions : ")
+                        LogFile.log_message(logfile_path, "Terminating ............... : ")
+                        exit()
+                else:
+                    LogFile.log_message(logfile_path, "Failed BB test on novel junctions : ")
+                    LogFile.log_message(logfile_path, "Terminating ............... : ")
+                    exit()
 
-            #     # annotated junctions (if enabled by user)
-            #     if args.annotated == 1:
-            #         annotated_junctions = junction_counts[junction_counts['annotation']=="DA"]
-            #         annotated_junctions.to_csv(args.o+args.prefix+".Annotated_Junctions.txt", sep="\t", index=None)
-            #         if DifferentialUsage.run_bbTest(args.o+args.prefix+".Annotated_Junctions.txt", control_num, treated_num, args.p, "CrypticJunctions") == 1:
-            #             LogFile.log_message(logfile_path, "Completed BB test on annotated junctions : ")
-            #             if DifferentialUsage.calc_junction_strength(args.o+args.prefix+".Annotated_Junctions.txt", control_num, treated_num) == 1:
-            #                 LogFile.log_message(logfile_path, "Completed computing junction strength on annotated junctions : ")
-            #                 novel_junctions = pd.read_csv(args.o+args.prefix+".Annotated_Junctions.txt", sep="\t")
-            #                 pass
-            #             else:
-            #                 LogFile.log_message(logfile_path, "Failed computing junction strength on annotated junctions : ")
-            #                 LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #                 exit()
-            #         else:
-            #             LogFile.log_message(logfile_path, "Failed BB test on annotated junctions : ")
-            #             LogFile.log_message(logfile_path, "Terminating ............... : ")
-            #             exit()
+                # annotated junctions (if enabled by user)
+                if args.annotated == 1:
+                    annotated_junctions = junction_counts[junction_counts['annotation']=="DA"]
+                    annotated_junctions.to_csv(args.o+args.prefix+".Annotated_Junctions.txt", sep="\t", index=None)
+                    if DifferentialUsage.run_bbTest(args.o+args.prefix+".Annotated_Junctions.txt", control_num, treated_num, args.p, "CrypticJunctions") == 1:
+                        LogFile.log_message(logfile_path, "Completed BB test on annotated junctions : ")
+                        if DifferentialUsage.calc_junction_strength(args.o+args.prefix+".Annotated_Junctions.txt", control_num, treated_num) == 1:
+                            LogFile.log_message(logfile_path, "Completed computing junction strength on annotated junctions : ")
+                            novel_junctions = pd.read_csv(args.o+args.prefix+".Annotated_Junctions.txt", sep="\t")
+                            pass
+                        else:
+                            LogFile.log_message(logfile_path, "Failed computing junction strength on annotated junctions : ")
+                            LogFile.log_message(logfile_path, "Terminating ............... : ")
+                            exit()
+                    else:
+                        LogFile.log_message(logfile_path, "Failed BB test on annotated junctions : ")
+                        LogFile.log_message(logfile_path, "Terminating ............... : ")
+                        exit()
 
 
             #### CrypticLoad 
@@ -331,14 +330,14 @@ def main():
 
 
 
-                # get gene-level cryptic load matrix - cryptic counts (num), junction counts total (denom), load (proportion)
-                # get sample-level cryptic load
-                # ["Diff"]
-                    # calculate differential load for gene-level 
-                    # calculate differential load for sample-level
-                # ["Clust"]
-                    # cluster the gene-loads using NMF clustering 
-                    # see if you can find groups that separate the treatmeents and memeberships of those
+            #     # get gene-level cryptic load matrix - cryptic counts (num), junction counts total (denom), load (proportion)
+            #     # get sample-level cryptic load
+            #     # ["Diff"]
+            #         # calculate differential load for gene-level 
+            #         # calculate differential load for sample-level
+            #     # ["Clust"]
+            #         # cluster the gene-loads using NMF clustering 
+            #         # see if you can find groups that separate the treatmeents and memeberships of those
 
 
 

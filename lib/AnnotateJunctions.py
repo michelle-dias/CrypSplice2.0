@@ -29,21 +29,30 @@ def annotate_junctions(junction_counts_path, gtf, fasta, outdir):
     regtools_output_path = outdir+"annotations.tmp.txt"
     command = ['regtools', 'junctions', 'annotate', '-S', '-o', regtools_output_path, junction_bed_path, fasta, gtf]
     exit_code = subprocess.run(['regtools','junctions','annotate','-S','-o',regtools_output_path,junction_bed_path,fasta,gtf],stderr=subprocess.DEVNULL,shell=False)
-
     # 0 means regtools worked
     if exit_code.returncode == 0:
         regtools_annotations = pd.read_csv(regtools_output_path, sep="\t")
-        regtools_annotations = regtools_annotations[["name","splice_site","anchor", "gene_names", "transcripts"]]
-        regtools_annotations.rename(columns={'name': 'juncID'}, inplace=True)
-        merged_df = pd.merge(junction_counts, regtools_annotations, on="juncID", how="left")
-        merged_df.rename(columns={'gene': 'gene_ids', 'anchor':'annotation'}, inplace=True)
+        regtools_annotations = regtools_annotations[["name","splice_site","anchor"]]
+        regtools_annotations.rename(columns={'name': 'juncID', 'anchor':'annotation'}, inplace=True)
+        regtools_annotations = regtools_annotations.drop_duplicates()
+        # dropping duplcated IDs
+        duplicated_juncIDs = regtools_annotations[regtools_annotations["juncID"].duplicated()]["juncID"].unique()
+        duplicated_df = regtools_annotations[regtools_annotations["juncID"].isin(duplicated_juncIDs)]
+        retained_dups = duplicated_df[duplicated_df["annotation"]!="N"]
+        regtools_annotations_noDups = regtools_annotations[~regtools_annotations['juncID'].isin(duplicated_juncIDs)]
+        regtools_annotations = pd.concat([regtools_annotations_noDups, retained_dups])
+        regtools_annotations = regtools_annotations.drop_duplicates(subset=['juncID'])
+        # merging annotations with junction counts
+        merged_df = pd.merge(junction_counts, regtools_annotations[['juncID', 'splice_site', 'annotation']], on='juncID', how='left')
+        junction_counts[['splice_site', 'annotation']] = merged_df[['splice_site', 'annotation']]
         merged_df.to_csv(outdir+"Annotated_JunctionCounts.txt", sep="\t", index=None)
         return(1)
     else:
-
         return(0)
 
-    
+
+# Bed12 Reformatting
+## converting junction counts temp bed to bed 12 format for regtools
 def bed12_reformat(junction_df):
     for index in [3,4,6,7,9]:
         junction_df['hold_'+str(index)]=0

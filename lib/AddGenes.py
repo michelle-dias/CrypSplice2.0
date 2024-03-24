@@ -14,6 +14,7 @@ def add_genes(annotated_junction_counts, gtf_path, processors, outDir):
 	gtf_data = Utilities.read_gtf_file(gtf_path)
 	gene_gtf = gtf_data[gtf_data["feature"] == "gene"]
 	gene_gtf = gene_gtf.assign(gene_id=gene_gtf['attribute'].str.extract(r'gene_id "(.*?)"'))
+	gene_gtf_wNames = gene_gtf.assign(gene_name=gene_gtf['attribute'].str.extract(r'gene_name "(.*?)"'))
 	gene_gtf = gene_gtf[["chrom", "start", "end", "strand", "gene_id"]]
 	global gene_gtf_array
 	gene_gtf_array = np.array(gene_gtf)
@@ -30,10 +31,15 @@ def add_genes(annotated_junction_counts, gtf_path, processors, outDir):
 	        else:
 	            results = np.concatenate((results, array), axis=0)
 	junctions_withGenes = pd.DataFrame(results, columns=column_names)
-	# dropping junctions with ends in two genes where the intron length is greater than 2500
-	junctions_withGenes = junctions_withGenes[~(junctions_withGenes['gene'].str.contains(',', na=False) & (junctions_withGenes['end'] - junctions_withGenes['start'] > 2500))]
-	junctions_withGenes.to_csv(outDir+"JunctionCounts.txt", sep="\t", index=None)
-	return 0 if junctions_withGenes['gene'].isna().all() else 1
+	if junctions_withGenes['gene'].isna().all():
+		return(0) 
+	else:
+		# adding gene names corresponding with gene ids
+		gene_mapping = dict(zip(gene_gtf_wNames['gene_id'], gene_gtf_wNames['gene_name']))
+		junctions_withGenes = junctions_withGenes.rename(columns={'gene': 'gene_id'})
+		junctions_withGenes['gene_name'] = junctions_withGenes['gene_id'].map(lambda x: ','.join(gene_mapping.get(gid.strip(), '') for gid in x.split(',')))
+		junctions_withGenes.to_csv(outDir+"JunctionCounts.txt", sep="\t", index=None)
+		return(1)
 
 
 
@@ -57,7 +63,15 @@ def find_junction_genes(junctions_array_elem):
     junctions_array_elem = np.append(junctions_array_elem, gene_names)
     return junctions_array_elem
 
+
+# Prep Junction Genes
+# prep each array element for parallelization
 def prep_junction_genes(junctions_array):
     junctions_with_geneInfo = np.apply_along_axis(find_junction_genes, axis=1, arr=junctions_array)
     return junctions_with_geneInfo
+
+
+
+
+
 

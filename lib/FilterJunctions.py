@@ -40,10 +40,10 @@ def PoverAM_filter(sjdf, nc, nt, P, A, M):
 # Gene Filter
 ## removing junctions spanning multiple genes or junctions not attributed to a gene
 def gene_filter(sjdf):
-    sjdf['gene'] = sjdf['gene'].astype(str)
-    sjdf['gene'].replace('nan', np.nan, inplace=True)
-    sjdf = sjdf.dropna(subset=['gene'])
-    sjdf = sjdf[~sjdf['gene'].str.contains(',')]
+    sjdf['gene_id'] = sjdf['gene_id'].astype(str)
+    sjdf['gene_id'].replace('nan', np.nan, inplace=True)
+    sjdf = sjdf.dropna(subset=['gene_id'])
+    sjdf = sjdf[~sjdf['gene_id'].str.contains(',')]
     return(sjdf)
 
 
