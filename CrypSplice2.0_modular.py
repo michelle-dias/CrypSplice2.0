@@ -150,7 +150,7 @@ def main():
     ### LogFile [Module] : Initializing log file
     # write_arguments: initializing logfile with transcription of arguments passed by user
     LogFile.write_arguments(args.o+args.prefix, args)
-    logfile_path = str(args.o+args.prefix+'.CrypSplice.log.txt')
+    logfile_path = str(args.o+args.prefix+'CrypSplice.log.txt')
 
 
     # execution of sub-commands [CrypticJunctions, CrypticLoad, etc. ]
@@ -227,6 +227,7 @@ def main():
                 LogFile.log_message(logfile_path, "Failed to annotate junctions: ")
                 LogFile.log_message(logfile_path, "Terminating ............... : ")
                 exit()
+            junction_counts = pd.read_csv(args.o+args.prefix+"Annotated_JunctionCounts.txt", sep="\t", dtype={"chrom": str})
 
         
             #### CrypticJunctions 

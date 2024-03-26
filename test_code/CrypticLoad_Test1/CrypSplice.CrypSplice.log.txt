@@ -1,0 +1,37 @@
+# Completed junction extraction:Tue 03/26/2024   20:21:16 
+# Completed filtering for quality junctions : :Tue 03/26/2024   20:21:16 
+# Completed adding junction gene ids : :Tue 03/26/2024   20:21:42 
+# Completed filtering junctions spanning multiple genes or not attributed to any gene: :Tue 03/26/2024   20:21:42 
+# Completed annotating junctions: :Tue 03/26/2024   20:22:17 
+# Completed calculating gene-level cryptic load : :Tue 03/26/2024   20:22:34 
+# Completed calculating sample-level cryptic load : :Tue 03/26/2024   20:22:34 
+# Completed clustering gene-level cryptic load : :Tue 03/26/2024   20:23:07 
+# Completed junction extraction:Tue 03/26/2024   20:42:07 
+# Completed filtering for quality junctions : :Tue 03/26/2024   20:42:07 
+# Completed adding junction gene ids : :Tue 03/26/2024   20:42:33 
+# Completed filtering junctions spanning multiple genes or not attributed to any gene: :Tue 03/26/2024   20:42:33 
+# Completed annotating junctions: :Tue 03/26/2024   20:43:08 
+# Completed calculating gene-level cryptic load : :Tue 03/26/2024   20:43:25 
+# Completed calculating sample-level cryptic load : :Tue 03/26/2024   20:43:25 
+# Completed clustering gene-level cryptic load : :Tue 03/26/2024   20:43:59 
+# Completed junction extraction:Tue 03/26/2024   21:08:58 
+# Completed adding junction gene ids : :Tue 03/26/2024   21:09:23 
+# Completed filtering junctions spanning multiple genes or not attributed to any gene: :Tue 03/26/2024   21:09:23 
+# Completed annotating junctions: :Tue 03/26/2024   21:09:58 
+# Completed calculating gene-level cryptic load : :Tue 03/26/2024   21:10:15 
+# Completed calculating sample-level cryptic load : :Tue 03/26/2024   21:10:15 
+# Completed clustering gene-level cryptic load : :Tue 03/26/2024   21:10:48 
+# Completed junction extraction:Tue 03/26/2024   21:45:51 
+# Completed adding junction gene ids : :Tue 03/26/2024   21:46:16 
+# Completed filtering junctions spanning multiple genes or not attributed to any gene: :Tue 03/26/2024   21:46:16 
+# Completed annotating junctions: :Tue 03/26/2024   21:46:51 
+# Completed calculating gene-level cryptic load : :Tue 03/26/2024   21:47:08 
+# Completed calculating sample-level cryptic load : :Tue 03/26/2024   21:47:08 
+# Completed junction extraction:Tue 03/26/2024   21:47:35 
+# Completed filtering for quality junctions : :Tue 03/26/2024   21:47:35 
+# Completed adding junction gene ids : :Tue 03/26/2024   21:48:01 
+# Completed filtering junctions spanning multiple genes or not attributed to any gene: :Tue 03/26/2024   21:48:01 
+# Completed annotating junctions: :Tue 03/26/2024   21:48:35 
+# Completed calculating gene-level cryptic load : :Tue 03/26/2024   21:48:52 
+# Completed calculating sample-level cryptic load : :Tue 03/26/2024   21:48:52 
+# Completed clustering gene-level cryptic load : :Tue 03/26/2024   21:49:18 

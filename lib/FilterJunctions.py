@@ -9,10 +9,15 @@ import numpy as np
 ## sets 'juncCounts' to 0 if both 'originCounts' and 'juncCounts' are below a cutoff 
 ## want to maintain specificity for load clustering by not dropping everything
 def load_quality_filter(junction_counts, read_cutoff):
-    #The code sets 'juncCounts' to 0 if both 'originCounts' and 'juncCounts' are below a cutoff.
-    lowQual_junctions = junction_counts.filter(like='originCounts').lt(read_cutoff).all(axis=1)
-    junction_counts.loc[lowQual_junctions, junction_counts.columns[junction_counts.columns.str.endswith('juncCounts')]] = 0
+    # getting sample names
+    filtered_columns = junction_counts.filter(like='juncCounts').columns
+    samples = [col.split('_juncCounts')[0] for col in filtered_columns]
+    # per sample filtering based on origin counts beign below read count filter
+    for sample in samples:
+        zero_indices = junction_counts[junction_counts[sample+"_originCounts"] < read_cutoff].index
+        junction_counts.loc[zero_indices, sample+"_juncCounts"] = 0
     return(junction_counts)
+
 
 
 

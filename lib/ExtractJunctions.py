@@ -44,12 +44,18 @@ def get_junction_counts(outdir, processors, control, treated, strand, gtf_path, 
             junction_counts = junction_counts[[0,1,2,5,4]]
             junction_counts.columns = ["chrom", "start", "end", "strand", sample_name]
             count_list.append(junction_counts)
-            #os.system("rm "+junction_bed)
+            os.system("rm "+junction_bed)
         merged_juncCounts = pd.concat(count_list).groupby(["chrom", "start", "end", "strand"]).sum().reset_index()
         merged_juncCounts = merged_juncCounts.fillna(0)
         junc_dict = create_dictionary(merged_juncCounts)
         junction_counts = get_junction_origin_counts(merged_juncCounts, control+treated, junc_dict)
-        junction_counts['juncID'] = junction_counts.apply(lambda row: ':'.join([str(row['chrom']), str(row['start'])])+'-'+ str(row['end'])+"("+str(row['strand'])+")", axis=1)
+        junction_counts['juncID'] = junction_counts.apply(lambda row: ':'.join([str(row['chrom']), str(row['start'])]) + '-' + str(row['end']), axis=1)
+        # adding "_juncCounts" ending to columns that are in the df
+        # Select columns to modify
+        n_samp=len(samples)
+        juncCount_cols = junction_counts.iloc[:,4:4+n_samp]
+        new_colHeads = [col + "_juncCounts" for col in juncCount_cols]
+        junction_counts.rename(columns=dict(zip(juncCount_cols, new_colHeads)), inplace=True)
         if junction_counts.empty:
             return(0)
         else:

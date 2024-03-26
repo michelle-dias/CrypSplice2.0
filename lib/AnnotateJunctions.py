@@ -46,6 +46,9 @@ def annotate_junctions(junction_counts_path, gtf, fasta, outdir):
         merged_df = pd.merge(junction_counts, regtools_annotations[['juncID', 'splice_site', 'annotation']], on='juncID', how='left')
         junction_counts[['splice_site', 'annotation']] = merged_df[['splice_site', 'annotation']]
         merged_df.to_csv(outdir+"Annotated_JunctionCounts.txt", sep="\t", index=None)
+        # removing temp files
+        os.system("rm "+regtools_output_path)
+        os.system("rm "+junction_bed_path)
         return(1)
     else:
         return(0)

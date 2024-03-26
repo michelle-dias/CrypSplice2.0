@@ -160,7 +160,7 @@ def find_cluster_membership(rank, nmf_df, outDir, geneLoad_df):
     })
     sample_membership = sample_membership.reset_index(drop=True)
     # Creating Gene Membership DataFrame
-    gene_names = geneLoad_df["gene_ids"]
+    gene_names = geneLoad_df["gene_id"]
     W_mat = pd.DataFrame(W, index=gene_names)
     # creating a new cluster for rows with all 0 -> could not be properly assigned to a cluster
     W_mat[rank] = (W_mat == 0).all(axis=1).astype(int)

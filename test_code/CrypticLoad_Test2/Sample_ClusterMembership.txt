@@ -1,0 +1,5 @@
+Sample	Cluster	Coefficient
+Control_1.CrypSplice_juncCounts	2	0.15411545657241899
+Control_2.CrypSplice_juncCounts	1	0.054917923130405714
+Rbm17_1.CrypSplice_juncCounts	2	0.16352241691500502
+Rbm17_2.CrypSplice_juncCounts	1	0.0452326708635278
