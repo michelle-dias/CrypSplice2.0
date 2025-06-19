@@ -1,4 +1,46 @@
-# CrypSplice.py (9/13/24)
+#!/usr/bin/env python3
+"""
+CrypSplice 2.1 - Main functionality
+"""
+
+# Standard library imports
+import os, sys, glob, time
+import pandas as pd, numpy as np, argparse
+import concurrent.futures as cf, subprocess
+import warnings, logging
+from collections import defaultdict
+import pysam
+
+# Import modules from lib package
+try:
+    # When installed as a package, use relative imports
+    from .lib import Setup, LogFile
+    from .lib import ExtractJunctions
+    from .lib import AddGenes
+    from .lib import AnnotateJunctions
+    from .lib import DifferentialUsage
+    from .lib import FilterJunctions
+    from .lib import CrypticLoad
+    from .lib import PlotJunctions
+    from .lib import BatchCorrection
+except ImportError:
+    # When running directly (not as package), use the old method
+    sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
+    import Setup, LogFile
+    import ExtractJunctions
+    import AddGenes
+    import AnnotateJunctions
+    import DifferentialUsage
+    import FilterJunctions
+    import CrypticLoad
+    import PlotJunctions
+    import BatchCorrection
+
+# Configure warnings
+warnings.filterwarnings(action="ignore", category=UserWarning, module="pysam")
+warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
+pd.options.mode.chained_assignment = None
 
 
 
@@ -555,29 +597,6 @@ def main():
 
 if __name__ == "__main__":
     try:
-        import os, sys, glob, time
-        import pandas as pd, numpy as np, argparse
-        sys.path.append("/".join(os.path.abspath(sys.argv[0]).split("/")[0:-1])+"/lib")
-        import Setup, LogFile
-        import ExtractJunctions
-        import AddGenes
-        import AnnotateJunctions
-        import DifferentialUsage
-        import FilterJunctions
-        import CrypticLoad
-        import PlotJunctions
-        import BatchCorrection
-        import concurrent.futures as cf, subprocess
-        import pandas as pd, numpy as np, argparse
-        import warnings,logging, pkg_resources
-        from collections import defaultdict
-        import pysam
-        warnings.filterwarnings(action="ignore", category=UserWarning, module="pysam") # for pysam if bam index is older than bam
-        warnings.simplefilter(action='ignore', category=FutureWarning) # for gtfparse
-        warnings.filterwarnings(action="ignore", category=RuntimeWarning)  # for iNMF
-        pd.options.mode.chained_assignment = None  # for pandas in junction_strangth function
         main()
     except ImportError as error:
-        print("\nPython 3 or a more recent version is required ...\nTerminating ...\n".format(error.message[16:]))
-
-
+        print(f"\nPython 3 or a more recent version is required: {error}\nTerminating ...\n")
