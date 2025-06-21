@@ -1,1 +1,0 @@
-do isZero diff fixedStep.bw fixedStep.wig
