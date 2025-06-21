@@ -4,7 +4,8 @@
 CrypSplice 2.0 is a robust computational tool designed to detect and analyze cryptic alternative splicing events from RNA-seq data. It provides enhanced capabilities for identifying differential splicing patterns that are not annotated (cryptic) in standard gene models.
 
 ## Installation
-###################
+git clone https://github.com/michelle-dias/CrypSplice2.0 
+pip install .
 
 ## Usage
 ### Cryptic Junctions 
