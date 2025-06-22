@@ -49,7 +49,7 @@ crypsplice CrypticLoad Clust \
 
 
 ### PlotJunctions
-python3 $CrypSplice PlotJunctions \
+crypsplice PlotJunctions \
     -pj Novel_Junctions_output \
     -c1 ./chr19_Bams/Contrl1.sorted.bam,./chr19_Bams/Contrl2.sorted.bam,./chr19_Bams/Contrl3.sorted.bam \
     -c2 ./chr19_Bams/Treat1.sorted.bam,./chr19_Bams/Treat2.sorted.bam,.chr19_Bams/Treat3.sorted.bam \
