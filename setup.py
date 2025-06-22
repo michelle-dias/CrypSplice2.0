@@ -68,7 +68,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "crypsplice=crypsplice.cli:cli_main",
+            "CrypSplice=crypsplice.cli:cli_main",
         ],
     },
     include_package_data=True,

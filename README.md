@@ -9,7 +9,7 @@ pip install .
 
 ## Usage
 ### Cryptic Junctions 
-python3 CrypSplice.py CrypticJunctions \
+crypsplice CrypticJunctions \
   -c1 "./chr19_Bams/Contrl1.sorted.bam,./chr19_Bams/Contrl2.sorted.bam,./chr19_Bams/Contrl3.sorted.bam" \
   -c2 "./chr19_Bams/Treat1.sorted.bam,./chr19_Bams/Treat2.sorted.bam,./chr19_Bams/Treat3.sorted.bam" \
   -gtf /path/to/annotations.gtf \
@@ -19,7 +19,7 @@ python3 CrypSplice.py CrypticJunctions \
   -o ./CrypticJunctions/
 
 ### Cryptic Load - Diff
-python3 $CrypSplice CrypticLoad Diff \
+crypsplice CrypticLoad Diff \
   -c1 "./chr19_Bams/Contrl1.sorted.bam,./chr19_Bams/Contrl2.sorted.bam,./chr19_Bams/Contrl3.sorted.bam" \
   -c2 "./chr19_Bams/Treat1.sorted.bam,./chr19_Bams/Treat2.sorted.bam,./chr19_Bams/Treat3.sorted.bam" \
   -gtf $gtf \
@@ -29,7 +29,7 @@ python3 $CrypSplice CrypticLoad Diff \
 
 
 ### Cryptic Load - Clust
-python3 $CrypSplice CrypticLoad Clust \
+crypsplice CrypticLoad Clust \
   -samples "./chr19_Bams/Contrl1.sorted.bam,./chr19_Bams/Contrl2.sorted.bam,./chr19_Bams/Contrl3.sorted.bam,./chr19_Bams/Treat1.sorted.bam,./chr19_Bams/Treat2.sorted.bam,.chr19_Bams/Treat3.sorted.bam \
   -p $processors \
   -gtf $gtf \
@@ -39,7 +39,7 @@ python3 $CrypSplice CrypticLoad Clust \
 
 
 ### Cryptic Load - Clust
-python3 $CrypSplice CrypticLoad Clust \
+crypsplice CrypticLoad Clust \
   -samples "./chr19_Bams/Contrl1.sorted.bam,./chr19_Bams/Contrl2.sorted.bam,./chr19_Bams/Contrl3.sorted.bam,./chr19_Bams/Treat1.sorted.bam,./chr19_Bams/Treat2.sorted.bam,.chr19_Bams/Treat3.sorted.bam \
   -p $processors \
   -gtf $gtf \
