@@ -11,11 +11,11 @@ import pandas as pd
 # Run bbTest
 ## calling the countdata R function to calculate the significance
 def run_bbTest(junctions, control_num, treated_num, processors, test_type):
-	Rscript_path = "/".join(os.path.abspath(sys.argv[0]).split("/")[0:-1])+"/lib/RunBBTest.R"
-	arguments = [junctions, str(control_num), str(treated_num), str(processors), str(test_type)]
-	command = ["Rscript", Rscript_path] + arguments
-	result = subprocess.check_output(command, universal_newlines=True)
-	return 1 if "Done" in result else 0
+    Rscript_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "RunBBTest.R")   
+    arguments = [junctions, str(control_num), str(treated_num), str(processors), str(test_type)]
+    command = ["Rscript", Rscript_path] + arguments
+    result = subprocess.check_output(command, universal_newlines=True)
+    return 1 if "Done" in result else 0
 
 
 # Calculate Junction Strength

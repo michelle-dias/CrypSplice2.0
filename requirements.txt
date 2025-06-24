@@ -1,5 +1,5 @@
 Python >=3.9.5
-numpy >=1.26.4
+numpy >=1.23.5
 sys >=3.9.5
 pandas >=1.5.0
 concurrent.futures >=3.9.5
@@ -11,3 +11,4 @@ gc >=3.9.5
 time >=3.9.5
 pyBigWig >=0.3.18
 regtools >=1.0.0
+matplotlib<3.8

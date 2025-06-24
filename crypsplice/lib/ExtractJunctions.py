@@ -8,8 +8,8 @@ import subprocess
 from concurrent.futures import ProcessPoolExecutor
 import gc
 
-sys.path.append("/".join(os.path.abspath(sys.argv[0]).split("/")[0:-1])+"/lib")
-import Utilities
+from . import Utilities
+
 
 # Extracting junction locations and counts using regtools #
 
@@ -52,7 +52,6 @@ def run_regtools(file):
     length_cutoff=str(file[3])
     command = ['regtools', 'junctions', 'extract','-s', strand,'-m', length_cutoff,'-o', output_bed,input_bam]
     command_string = ' '.join(command)
-    print(command_string)
     log = subprocess.run(command, stderr=subprocess.DEVNULL, shell=False)
     return(1)
  
@@ -143,6 +142,8 @@ def stitch_extractJunctions(control_bams, treated_bams, outdir):
     # Save the merged DataFrame to a new file
     if not merged_df.empty:
         merged_df.to_csv(outdir+'JunctionCounts.txt', sep="\t", index=False)
+        [os.remove(f) for f in sample_beds if os.path.exists(f)]
+
         return(1)
     else:
         return(0)

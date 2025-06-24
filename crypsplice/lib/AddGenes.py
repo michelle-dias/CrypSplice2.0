@@ -1,8 +1,7 @@
 # AddGenes.py
 
 import sys, os
-sys.path.append("/".join(os.path.abspath(sys.argv[0]).split("/")[0:-1])+"/lib")
-import Utilities
+from . import Utilities
 import numpy as np
 import pandas as pd
 import concurrent.futures as cf

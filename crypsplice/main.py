@@ -161,8 +161,8 @@ def main():
     PJ_required.add_argument('-gtf',help='Reference gtf file',required='True',type=str)
     PJ_required.add_argument('-fasta',help='Reference fasta sequence',required='True',type=str)
     PJ_required.add_argument('-s',help='Strand specific data 0: unstranded, 1: frd, 2: rev', choices=[0,1,2], required='True', type=int)
-    PJ_required.add_argument('-b', help="Path to text file containing batch information (1st column: 'Sample', 2nd column: 'Batch')")
     # optional arguments
+    PJ_optional.add_argument('-b', help="Path to text file containing batch information (1st column: 'Sample', 2nd column: 'Batch')")
     PJ_optional.add_argument('-prefix',help='Output file prefix', default="CrypSplice",type=str)
     PJ_optional.add_argument('-p',help='No. of processors to use',type=int,default=10)
     PJ_optional.add_argument('-top_n', help='Number of top significant junction ids from Novel_Junctions.txt to plot',type=int, default=10)
@@ -526,23 +526,6 @@ def main():
                     LogFile.log_message(logfile_path, "Terminating ............... : ")
                     exit()
 
-                # gene-level
-                if CrypticLoad.cluster_geneLoad(args.o+args.prefix+"GeneLoad.txt", args.i, args.p, args.o+args.prefix+"GeneLevel.", args.r) == 1:
-                    LogFile.log_message(logfile_path, "Completed clustering gene-level cryptic load : ")
-                    pass
-                else:
-                    LogFile.log_message(logfile_path, "Failed clustering gene-level cryptic load : ")
-                    LogFile.log_message(logfile_path, "Terminating ............... : ")
-                    exit()
-
-                # sample-level
-                if CrypticLoad.cluster_sampleLoad(args.o+args.prefix+"SampleLoad.txt", args.o+args.prefix+"SampleLevel.", args.r) == 1:
-                    LogFile.log_message(logfile_path, "Completed clustering sample-level cryptic load : ")
-                    pass
-                else:
-                    LogFile.log_message(logfile_path, "Failed clustering sample-level cryptic load : ")
-                    LogFile.log_message(logfile_path, "Terminating ............... : ")
-                    exit()
                 # clean up intermediate files 
                 intermediate_files = [args.o+args.prefix+"Annotated_JunctionCounts.txt", args.o+args.prefix+"JunctionCounts.txt"]
                 [os.unlink(file) for file in intermediate_files]
@@ -586,7 +569,7 @@ def main():
 #         # logfile.close()
     
     finally:
-        print("delete this at the end")
+        print("Fin")
         # #pass
         # # Clean if terminated #
         # del_files=glob.glob(args.o+"*.bed")+glob.glob(args.o+"*.arcs")+glob.glob(args.o+"*.out.tab")+glob.glob(args.o+args.prefix+"_Junctions_*.txt")

@@ -401,7 +401,7 @@ def plot_junction(params):
         file.write("[spacer]\nheight = 0.05\n")
 
     #pygenome command
-    title = "'"+junc_id +"  ["+gene_name+"]"+"'"
+    title = "'"+str(junc_id) +"  ["+str(gene_name)+"]"+"'"
     plot_cmd = "pyGenomeTracks --tracks "+config_output+" --region "+region+" -t "+title+" --width 24 --trackLabelFraction 0.01 -out "+plot_output+" --fontSize 6"
     os.system(plot_cmd)
 
