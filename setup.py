@@ -75,7 +75,8 @@ setup(
     package_data={
         "crypsplice": [
             "lib/*.py",
-            "*.py"
+            "*.py",
+            "lib/*.R"
         ],
     },
     zip_safe=False,
