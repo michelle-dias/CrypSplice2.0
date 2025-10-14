@@ -7,6 +7,14 @@ CrypSplice 2.0 is a robust computational tool designed to detect and analyze cry
 git clone https://github.com/michelle-dias/CrypSplice2.0 
 pip install .
 
+
+## Alternative installation with docker
+
+docker build -t crypsplice:latest .
+docker run --rm crypsplice --help
+
+
+
 ## Usage
 ### Cryptic Junctions 
 crypsplice CrypticJunctions \
@@ -144,18 +152,14 @@ PlotJunctions – Visualize cryptic junctions of interest
 
 
 ## Requirements
-Python >=3.9.5
-numpy >=1.26.4
-sys >=3.9.5
-pandas >=1.5.0
-concurrent.futures >=3.9.5
-pybedtools >=0.8.2
-subprocess >=3.9.5
-sklearn >=1.1.2
-matplotlib >=3.6.21
-gc >=3.9.5
-time >=3.9.5
-pyBigWig >=0.3.18
+numpy>=1.23.5
+pandas>=1.5.0
+pybedtools>=0.8.2
+scikit-learn>=1.1.2
+matplotlib>=3.6.2,<3.8
+pyBigWig>=0.3.18
+regtools>=0.1.4
+
 
 
 
