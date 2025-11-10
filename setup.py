@@ -75,8 +75,9 @@ setup(
     package_data={
         "crypsplice": [
             "lib/*.py",
-            "*.py",
-            "lib/*.R"
+            "lib/*.R",
+            "lib/classification_imports/*",     # <— add this
+            "lib/visualization_imports/*",      # <— and this
         ],
     },
     zip_safe=False,

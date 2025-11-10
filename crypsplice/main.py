@@ -23,6 +23,8 @@ try:
     from .lib import CrypticLoad
     from .lib import PlotJunctions
     from .lib import BatchCorrection
+    from .lib import ClassifyJunctions
+
 except ImportError:
     # When running directly (not as package), use the old method
     sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
@@ -35,6 +37,8 @@ except ImportError:
     import CrypticLoad
     import PlotJunctions
     import BatchCorrection
+    import ClassifyJunctions
+
 
 # Configure warnings
 warnings.filterwarnings(action="ignore", category=UserWarning, module="pysam")
@@ -60,7 +64,8 @@ def main():
     parser = argparse.ArgumentParser(prog='CrypSplice2.1',usage=usage, formatter_class=argparse.RawDescriptionHelpFormatter,
     description=('''Command:         CrypticJunctions        Infer cryptic splice junctions (across two conditions)
                  CrypticLoad             Infer cryptic load at gene/sample level and stratify samples
-                 PlotJunctions           Visualize junctions of interest'''), epilog= " ")
+                 PlotJunctions           Visualize junctions of interest
+                 ClassifyJunctions       Annotate junctions'''), epilog= " ")
     # creating sub-parser for main commands [CrypticJunctions, PlotJunctions, CrypticLoad] 
     sub_parsers = parser.add_subparsers(title="Commands",dest="command", help=argparse.SUPPRESS)
     
@@ -177,6 +182,24 @@ def main():
     PJ_optional.add_argument('-l',help='Junction length cutoff. Junctions with intron length < cutoff will not be plotted',type=int,default=50)
     
 
+    ## ClassifyJunctions sub-parser
+    ClJusage = '\r{}\nUsage:           %(prog)s [arguments]'.format('Program:         CrypSplice\nVersion:         2.1'.ljust(len('usage:')))
+    ClJ = sub_parsers.add_parser(prog='CrypSplice2.1 ClassifyJunctions', help='Classify junctions using ASProfile annotations',name="ClassifyJunctions", usage=ClJusage, epilog=" ",formatter_class=argparse.RawDescriptionHelpFormatter)
+    ClJ_optional = ClJ._action_groups.pop()
+    ClJ_required = ClJ.add_argument_group('required arguments')
+    ClJ._action_groups.append(ClJ_optional)
+     # required arguments
+    ClJ_required.add_argument('-o',help='Output directory where plots will be', required='True', type=str)
+    ClJ_required.add_argument('-pj',help='Path to output file from Crypticjunctions command containing junctions to be plotted [Novel_Junctions.txt or Annotated_Junctions.txt]', required='True', type=str)
+    ClJ_required.add_argument('-c1',help='Comma-separated list of condition1 files [control files]', nargs='+', required='True', type=str)
+    ClJ_required.add_argument('-c2',help='Comma-separated list of condition2 files [treated files]', nargs='+', required='True', type=str)
+    ClJ_required.add_argument('-gtf',help='Reference gtf file',required='True',type=str)
+    ClJ_required.add_argument('-fasta',help='Reference fasta sequence',required='True',type=str)
+    # optional arguments
+    ClJ_optional.add_argument('-prefix',help='Output file prefix', default="CrypSplice",type=str)
+    ClJ_optional.add_argument('-p',help='No. of processors to use',type=int,default=10)
+    
+
     # getting arguments passed by user
     args=parser.parse_args()
 
@@ -204,10 +227,10 @@ def main():
         exit()
 
     # check_directories: checking for output directories and creating if necessary (will "clean" or remove directory if already existing and replace)
-    args.o += "/" if not args.o.endswith("/") else ""
-    if Setup.check_directories(args.o) == 1:
-        print("Failed to find "+args.o)
-        exit()
+    # args.o += "/" if not args.o.endswith("/") else ""
+    # if Setup.check_directories(args.o) == 1:
+    #     print("Failed to find "+args.o)
+    #     exit()
 
     # initialize_samples: splitting the comma delimited paths of samples into sample vectors
     if args.command == 'CrypticLoad' and args.CLcommand == 'Clust':
@@ -532,6 +555,18 @@ def main():
 
 
 
+
+
+        ### ClassifyJunctions [Module] : Add classifications to novel junctions
+        if args.command in ['ClassifyJunctions']:
+            if ClassifyJunctions.classify_junctions(controls+treated, args.o, args.p, args.gtf, args.fasta, args.pj)==1:
+                print("Trying")
+                LogFile.log_message(logfile_path, "Completed annotating junctions : ")
+                pass
+            else:
+                LogFile.log_message(logfile_path, "Failed to annotate junctions : ")
+                LogFile.log_message(logfile_path, "Terminating ............... : ")
+                exit()
 
 
 
