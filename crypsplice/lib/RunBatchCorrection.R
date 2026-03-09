@@ -1,66 +1,56 @@
+if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager")
+if (!requireNamespace("sva", quietly=TRUE)) BiocManager::install("sva")
 
-
-
-
-#devtools::install_github("zhangyuqing/sva-devel")
 library(sva)
 
-# Receiving arguments from python
 args <- commandArgs(trailingOnly=TRUE)
+junctions_df_path   <- args[1]
+#junctions_df_path <- "/mnt/localstorage/michelle/data/Projects/CrypSplice/CrypticLoad_ROSMAP/Attempt_3_Batch/CrypticLoad_Clust/CrypSplice.JunctionCounts.txt"
 
-# Capturing individual components of arguments
-junctions_df_path <- args[1]
-#junctions_df_path <- "/mnt/localstorage/michelle/data/Projects/CrypSplice/CrypSplice_Editing/Batch_Corrections_4_2_25/BC_test_1/CrypSplice.JunctionCounts.txt"
 batchCorr_meta_path <- args[2]
-#batchCorr_meta_path <- "/mnt/localstorage/michelle/data/Projects/CrypSplice/CrypSplice_Editing/Batch_Corrections_4_2_25/BC_test_1/batchCorr_meta.txt"
+#batchCorr_meta_path <- "/mnt/localstorage/michelle/data/Projects/CrypSplice/CrypticLoad_ROSMAP/Attempt_3_Batch/batchMeta_test.txt"
 
 
+junctions_df   <- read.table(junctions_df_path,  sep="\t", header=TRUE, check.names=FALSE)
+batchCorr_meta <- read.table(batchCorr_meta_path, sep="\t", header=TRUE, check.names=FALSE)
 
-junctions_df <- read.table(junctions_df_path, sep="\t", header=TRUE)
-
-batchCorr_meta <- read.table(batchCorr_meta_path, sep="\t", header=TRUE)
-
-
-# Read the data (assuming it's in a dataframe called df)
-
-
-
-# subsetting jucntion counts columns
-juncCounts_cols <- grep("juncCounts$", colnames(junctions_df))
-
-# extract junction counts and batch correct
-juncCounts <- junctions_df[, juncCounts_cols]
-juncCounts_order <- gsub("_juncCounts$", "", colnames(juncCounts))
-batchCorr_meta$Sample <- factor(batchCorr_meta$Sample, levels = juncCounts_order, ordered = TRUE)
-batches <- batchCorr_meta$Batch
-juncCounts_bc <- ComBat_seq(juncCounts, batch=batches, group=NULL)
-
-# replacing original junction counts with batch corrected counts
-junctions_df[, juncCounts_cols] <- juncCounts_bc
-
-# subsetting jucntion counts columns
-originCounts_cols <- grep("originCounts$", colnames(junctions_df))
-
-# extract junction counts and batch correct
-originCounts <- junctions_df[, originCounts_cols]
-originCounts_order <- gsub("_juncCounts$", "", colnames(originCounts))
-batchCorr_meta$Sample <- factor(batchCorr_meta$Sample, levels = originCounts_order, ordered = TRUE)
-batches <- batchCorr_meta$Batch
-originCounts_bc <- ComBat_seq(originCounts, batch=batches, group=NULL)
-
-# replacing original junction counts with batch corrected counts
-junctions_df[, originCounts_cols] <- originCounts_bc
-
-
-
-# saving batch corrected data to path if not empty and returning 1 
-if (!all(is.na(junctions_df[, originCounts_cols])) && !all(is.na(junctions_df[, juncCounts_cols]))) {
-  write.table(junctions_df, junctions_df_path, sep="\t", row.names = FALSE)
-  cat(1)
-} else {
-  cat(0)
+# --- Helper: extract, batch-correct, and return corrected matrix ---
+batch_correct <- function(df, col_pattern, strip_pattern, meta) {
+  cols   <- grep(col_pattern, colnames(df))
+  counts <- df[, cols, drop=FALSE]
+  order  <- gsub(strip_pattern, "", colnames(counts))
+  
+  # Reorder metadata to match column order of count matrix
+  meta$Sample <- as.character(meta$Sample)
+  meta <- meta[match(order, meta$Sample), ]
+  
+  if (any(is.na(meta$Sample))) {
+    stop(paste("Sample mismatch! These samples are in counts but not in metadata:",
+               paste(order[!order %in% meta$Sample], collapse=", ")))
+  }
+  
+  batches   <- meta$Batch
+  corrected <- ComBat_seq(as.matrix(counts), batch=batches, group=NULL)
+  return(list(corrected=corrected, cols=cols))
 }
 
+# Batch correct junction counts
+junc_result   <- batch_correct(junctions_df, "juncCounts$",   "_juncCounts$",   batchCorr_meta)
+junctions_df[, junc_result$cols] <- junc_result$corrected
 
+# Batch correct origin counts
+origin_result <- batch_correct(junctions_df, "originCounts$", "_originCounts$", batchCorr_meta)
+junctions_df[, origin_result$cols] <- origin_result$corrected
 
+# Save and return status
+junc_cols   <- junc_result$cols
+origin_cols <- origin_result$cols
+
+# Replace the final if/else block with this:
+if (!all(is.na(junctions_df[, origin_cols])) && !all(is.na(junctions_df[, junc_cols]))) {
+  write.table(junctions_df, junctions_df_path, sep="\t", row.names=FALSE)
+  cat("1\n")
+} else {
+  cat("0\n")
+}
 

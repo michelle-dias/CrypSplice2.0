@@ -264,7 +264,6 @@ def main():
         #### CrypticJunctions or CrypticLoad
         if args.command in ['CrypticJunctions', 'CrypticLoad', 'PlotJunctions']:
 
-
             ### ExtractJunctions [Module] : Extracting junction counts using pysam 
             if ExtractJunctions.get_junction_counts(args.o + args.prefix, args.p, controls, treated, args.s, args.gtf, args.l) == 1:
                 LogFile.log_message(logfile_path, "Completed junction extraction")
@@ -310,7 +309,7 @@ def main():
 
             ### BatchCorrection [Module] :
             if args.b:
-                if BatchCorrection.run_batchCorr(args.o+args.prefix+"JunctionCounts.txt", args.b)==1:
+                if BatchCorrection.run_batchCorr(args.o+args.prefix+"JunctionCounts.txt", args.b) == 1:
                     junction_counts = pd.read_csv(args.o + args.prefix + "JunctionCounts.txt", sep="\t")
                     LogFile.log_message(logfile_path, "Completed batch correcting junction counts and origin counts : ")
                     pass
